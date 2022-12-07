@@ -159,10 +159,17 @@ std::string Environment::GetLogName()
 
 std::string Environment::GetRegistryKey()
 {
+    if (mBuildConfig == BuildConfiguration::Debug) {
+        wxRegKey key(wxRegKey::HKCU, "Software\\Taskiesd");
+        if (!key.Exists()) {
+            key.Create("Software\\Taskiesd");
+        }
+    }
+
     switch (mBuildConfig) {
-    case Environment::BuildConfiguration::Debug:
-        return "Software\\Taskies-d";
-    case Environment::BuildConfiguration::Release:
+    case BuildConfiguration::Debug:
+        return "Software\\Taskiesd";
+    case BuildConfiguration::Release:
         return "Software\\Taskies";
     default:
         return "";
