@@ -26,10 +26,14 @@
 
 #include "core/environment.h"
 
+#include "ui/persistencemanager.h"
+
 namespace app
 {
 Application::Application()
     : pLogger(nullptr)
+    , pEnv(nullptr)
+    , pPersistenceManager(nullptr)
 {
     SetProcessDPIAware();
 }
@@ -41,6 +45,9 @@ bool Application::OnInit()
     }
 
     InitializeLogger();
+
+    pPersistenceManager = std::make_unique<UI::PersistenceManager>(pEnv, pLogger);
+    wxPersistenceManager::Set(*pPersistenceManager);
 }
 
 int Application::OnExit()

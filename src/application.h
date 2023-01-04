@@ -35,6 +35,11 @@ namespace Core
 class Environment;
 }
 
+namespace UI
+{
+class PersistenceManager;
+}
+
 class Application : public wxApp
 {
 public:
@@ -46,8 +51,10 @@ public:
 
 private:
     void InitializeLogger();
+    void RunMigrations();
 
     std::shared_ptr<spdlog::logger> pLogger;
     std::shared_ptr<Core::Environment> pEnv;
+    std::shared_ptr<UI::PersistenceManager> pPersistenceManager;
 };
 } // namespace app

@@ -22,9 +22,13 @@ set (SRC
     "application.cpp"
     "utils/utils.cpp"
     "core/environment.cpp"
-    "core/configuration.cpp")
+    "core/configuration.cpp"
+    "ui/persistencemanager.cpp"
+)
 
-add_executable (${PROJECT_NAME} WIN32 ${SRC})
+add_executable (${PROJECT_NAME} WIN32
+    ${SRC}
+)
 
 target_compile_options (${PROJECT_NAME} PRIVATE
     $<$<CXX_COMPILER_ID:MSVC>:/W3 /permissive- /TP /EHsc>

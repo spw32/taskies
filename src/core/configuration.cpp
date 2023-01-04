@@ -38,7 +38,7 @@ void Configuration::Save()
         { Sections::DatabaseSection, { { "backupPath", mSettings.DatabasePath } } },
     };
 
-     const std::string configString = toml::format(data);
+    const std::string configString = toml::format(data);
 
     const std::string configFilePath = pEnv->GetConfigurationPath().u8string();
     std::ofstream configFile;
