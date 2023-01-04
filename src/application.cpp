@@ -40,6 +40,18 @@ bool Application::OnInit()
         return false;
     }
 
+    InitializeLogger();
+}
+
+int Application::OnExit()
+{
+    // Under VisualStudio, this must be called before main finishes to workaround a known VS issue
+    spdlog::drop_all();
+    return wxApp::OnExit();
+}
+
+void Application::InitializeLogger()
+{
     pEnv = std::make_shared<Core::Environment>();
 
     auto logDirectory = pEnv->GetLogFilePath().string();
@@ -62,12 +74,5 @@ bool Application::OnInit()
     logger->enable_backtrace(32);
 
     pLogger = logger;
-}
-
-int Application::OnExit()
-{
-    // Under VisualStudio, this must be called before main finishes to workaround a known VS issue
-    spdlog::drop_all();
-    return wxApp::OnExit();
 }
 } // namespace app

@@ -57,6 +57,11 @@ std::filesystem::path Environment::GetLanguagesPath()
     return GetApplicationLanguagesPath();
 }
 
+std::filesystem::path Environment::GetConfigurationPath()
+{
+    return GetApplicationConfigurationPath() / GetConfigName();
+}
+
 std::string Environment::GetCurrentLocale()
 {
 #ifdef _WIN32
@@ -152,9 +157,32 @@ std::filesystem::path Environment::GetApplicationLanguagesPath()
     return appLangPath;
 }
 
+std::filesystem::path Environment::GetApplicationConfigurationPath()
+{
+    std::filesystem::path appConfigPath;
+    switch (mBuildConfig) {
+    case BuildConfiguration::Debug:
+        appConfigPath = GetApplicationPath();
+        // std::filesystem::create_directories(appConfigPath);
+        break;
+    case BuildConfiguration::Release:
+        appConfigPath = std::filesystem::path(wxStandardPaths::Get().GetUserDataDir().ToStdString());
+        break;
+    default:
+        break;
+    }
+
+    return appConfigPath;
+}
+
 std::string Environment::GetLogName()
 {
     return "taskies.log";
+}
+
+std::string Environment::GetConfigName()
+{
+    return "taskies.toml";
 }
 
 std::string Environment::GetRegistryKey()

@@ -40,6 +40,7 @@ public:
 
     std::filesystem::path GetLogFilePath();
     std::filesystem::path GetLanguagesPath();
+    std::filesystem::path GetConfigurationPath();
 
     std::string GetCurrentLocale();
 
@@ -51,8 +52,10 @@ private:
     std::filesystem::path GetApplicationPath();
     std::filesystem::path GetApplicationLogPath();
     std::filesystem::path GetApplicationLanguagesPath();
+    std::filesystem::path GetApplicationConfigurationPath();
 
     std::string GetLogName();
+    std::string GetConfigName();
 
     std::string GetRegistryKey();
 

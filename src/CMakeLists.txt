@@ -8,19 +8,21 @@ find_package(unofficial-sqlite3 CONFIG REQUIRED)
 find_package(ZLIB REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
 find_package(date CONFIG REQUIRED)
+find_package(toml11 CONFIG REQUIRED)
 
 message (STATUS "wxWidgets_FOUND: ${wxWidgets_FOUND}")
 message (STATUS "unofficial-sqlite3_FOUND found: ${unofficial-sqlite3_FOUND}")
 message (STATUS "ZLIB found: ${ZLIB_FOUND}")
 message (STATUS "spdlog found: ${spdlog_FOUND}")
 message (STATUS "date found: ${date_FOUND}")
+message (STATUS "toml11 found: ${toml11_FOUND}")
 
 set (SRC
     "main.cpp"
     "application.cpp"
     "utils/utils.cpp"
     "core/environment.cpp"
-)
+    "core/configuration.cpp")
 
 add_executable (${PROJECT_NAME} WIN32 ${SRC})
 
@@ -50,4 +52,5 @@ target_link_libraries (${PROJECT_NAME} PRIVATE
     ZLIB::ZLIB
     spdlog::spdlog
     date::date date::date-tz
+    toml11::toml11
 )

@@ -19,35 +19,45 @@
 
 #pragma once
 
+#include <string>
 #include <memory>
 
-#include <wx/wxprec.h>
-#ifndef WX_PRECOMP
-#include <wx/wx.h>
-#endif
-
+#include <toml.hpp>
 #include <spdlog/spdlog.h>
 
-namespace app
-{
-namespace Core
+namespace app::Core
 {
 class Environment;
-}
 
-class Application : public wxApp
+class Configuration
 {
 public:
-    Application();
-    virtual ~Application() = default;
+    Configuration(std::shared_ptr<Environment> env, std::shared_ptr<spdlog::logger> logger);
+    Configuration(const Configuration&) = delete;
+    ~Configuration() = default;
 
-    bool OnInit() override;
-    int OnExit() override;
+    Configuration& operator=(const Configuration&) = delete;
+
+    void Save();
+
+    std::string GetDatabasePath() const;
+    void SetDatabasePath(const std::string& value);
 
 private:
-    void InitializeLogger();
+    void LoadConfigFile();
 
+    void GetDatabaseConfig(const toml::value& config);
+
+    struct Sections {
+        static const std::string DatabaseSection;
+    };
+
+    struct Settings {
+        std::string DatabasePath;
+    };
+
+    Settings mSettings;
+    std::shared_ptr<Environment> pEnv;
     std::shared_ptr<spdlog::logger> pLogger;
-    std::shared_ptr<Core::Environment> pEnv;
 };
-} // namespace app
+} // namespace app::Core
