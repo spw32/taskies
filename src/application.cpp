@@ -82,4 +82,9 @@ void Application::InitializeLogger()
 
     pLogger = logger;
 }
+
+void Application::RunMigrations()
+{
+
+}
 } // namespace app
