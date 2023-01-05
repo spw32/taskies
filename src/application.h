@@ -51,7 +51,9 @@ public:
 
 private:
     void InitializeLogger();
-    void RunMigrations();
+    bool RunMigrations();
+
+    bool FirstStartupProcedure();
 
     std::shared_ptr<spdlog::logger> pLogger;
     std::shared_ptr<Core::Environment> pEnv;

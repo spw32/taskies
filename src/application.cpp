@@ -24,7 +24,10 @@
 #include <spdlog/sinks/daily_file_sink.h>
 #include <spdlog/sinks/msvc_sink.h>
 
+#include "common/common.h"
+
 #include "core/environment.h"
+#include "core/database_migration.h"
 
 #include "ui/persistencemanager.h"
 
@@ -48,6 +51,18 @@ bool Application::OnInit()
 
     pPersistenceManager = std::make_unique<UI::PersistenceManager>(pEnv, pLogger);
     wxPersistenceManager::Set(*pPersistenceManager);
+
+    if (!RunMigrations()) {
+        pLogger->error("Failed to run migrations");
+        wxMessageBox("Failed to run migrations", Common::GetProgramName(), wxICON_ERROR | wxOK_DEFAULT);
+        return false;
+    }
+
+    if (!pEnv->IsSetup()) {
+        if (!FirstStartupProcedure()) {
+            return false;
+        }
+    }
 }
 
 int Application::OnExit()
@@ -83,8 +98,25 @@ void Application::InitializeLogger()
     pLogger = logger;
 }
 
-void Application::RunMigrations()
+bool Application::RunMigrations()
 {
+    Core::DatabaseMigration migrations(pEnv, pLogger);
 
+    return migrations.Migrate();
+}
+
+bool Application::FirstStartupProcedure()
+{
+    //if (!RunSetupWizard()) {
+    //    // DeleteDatabaseFile();
+    //    return false;
+    //}
+
+    if (!pEnv->SetIsSetup()) {
+        pLogger->error("Error occured when setting 'IsSetup' Windows registry key.");
+        return false;
+    }
+
+    return true;
 }
 } // namespace app
