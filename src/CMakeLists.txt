@@ -24,7 +24,7 @@ set (SRC
     "core/environment.cpp"
     "core/configuration.cpp"
     "ui/persistencemanager.cpp"
-    "core/database_migration.cpp")
+    "core/database_migration.cpp" "common/common.cpp")
 
 add_executable (${PROJECT_NAME} WIN32
     ${SRC}

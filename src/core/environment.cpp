@@ -98,7 +98,7 @@ void Environment::SetInstallFolder()
     }
 }
 
-bool Environment::IsInstalled()
+bool Environment::IsSetup()
 {
     wxRegKey key(wxRegKey::HKCU, GetRegistryKey());
     if (key.HasValue("IsSetup")) {
@@ -110,7 +110,7 @@ bool Environment::IsInstalled()
     return false;
 }
 
-bool Environment::SetIsInstalled()
+bool Environment::SetIsSetup()
 {
     wxRegKey key(wxRegKey::HKCU, GetRegistryKey());
     bool result = key.Exists();

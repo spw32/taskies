@@ -46,8 +46,8 @@ public:
     std::string GetCurrentLocale();
 
     void SetInstallFolder();
-    bool IsInstalled();
-    bool SetIsInstalled();
+    bool IsSetup();
+    bool SetIsSetup();
 
 private:
     std::filesystem::path GetApplicationPath();
