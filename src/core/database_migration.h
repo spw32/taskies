@@ -47,5 +47,11 @@ private:
     sqlite3* pDb;
     std::shared_ptr<Environment> pEnv;
     std::shared_ptr<spdlog::logger> pLogger;
+
+    static const std::string BeginTransactionQuery;
+    static const std::string CommitTransactionQuery;
+    static const std::string CreateMigrationHistoryQuery;
+    static const std::string SelectMigrationExistsQuery;
+    static const std::string InsertMigrationHistoryQuery;
 };
 } // namespace app::Core

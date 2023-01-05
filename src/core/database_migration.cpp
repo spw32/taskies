@@ -49,6 +49,16 @@ static BOOL CALLBACK EnumMigrations(HMODULE hModule, LPCTSTR lpszType, LPTSTR lp
 
 namespace app::Core
 {
+const std::string DatabaseMigration::BeginTransactionQuery = "BEGIN TRANSACTION";
+const std::string DatabaseMigration::CommitTransactionQuery = "COMMIT";
+const std::string DatabaseMigration::CreateMigrationHistoryQuery =
+    "CREATE TABLE IF NOT EXISTS migration_history("
+    "id INTEGER PRIMARY KEY NOT NULL,"
+    "name TEXT NOT NULL"
+    ");";
+const std::string DatabaseMigration::SelectMigrationExistsQuery = "SELECT count(*) FROM migration_history WHERE name = ?";
+const std::string DatabaseMigration::InsertMigrationHistoryQuery = "INSERT INTO migration_history (name) VALUES (?);";
+
 DatabaseMigration::DatabaseMigration(std::shared_ptr<Environment> env, std::shared_ptr<spdlog::logger> logger)
     : pEnv(env)
     , pLogger(logger)
@@ -56,14 +66,14 @@ DatabaseMigration::DatabaseMigration(std::shared_ptr<Environment> env, std::shar
 {
     auto databaseFile = pEnv->GetDatabasePath().string();
     int rc = sqlite3_open(databaseFile.c_str(), &pDb);
-    if (rc == SQLITE_ERROR) {
+    if (rc != SQLITE_OK) {
         const char* err = sqlite3_errmsg(pDb);
         pLogger->error("Failed to open database {0}", std::string(err));
     }
 
     sqlite3_stmt* stmt = nullptr;
     rc = sqlite3_prepare_v2(pDb, "PRAGMA foreign_keys = ON;", -1, &stmt, nullptr);
-    if (rc == SQLITE_ERROR) {
+    if (rc != SQLITE_OK) {
         const char* err = sqlite3_errmsg(pDb);
         pLogger->error("Failed to prepare statement {0}", std::string(err));
         sqlite3_finalize(stmt);
@@ -71,7 +81,7 @@ DatabaseMigration::DatabaseMigration(std::shared_ptr<Environment> env, std::shar
     }
 
     rc = sqlite3_step(stmt);
-    if (rc == SQLITE_ERROR) {
+    if (rc != SQLITE_OK) {
         const char* err = sqlite3_errmsg(pDb);
         pLogger->error("Error when executing statement {0}", std::string(err));
         sqlite3_finalize(stmt);
@@ -107,21 +117,111 @@ bool DatabaseMigration::Migrate()
     );
     // clang-format on
 
-    bool sqlTransactionSuccessful = true;
+    sqlite3_stmt* stmt = nullptr;
+    int rc = sqlite3_prepare_v2(pDb, BeginTransactionQuery.c_str(), -1, &stmt, nullptr);
+    if (rc != SQLITE_OK) {
+        const char* err = sqlite3_errmsg(pDb);
+        pLogger->error("Failed to prepare statement {0}", std::string(err));
+        sqlite3_finalize(stmt);
+        return false;
+    }
 
-    return false;
+    rc = sqlite3_step(stmt);
+    if (rc != SQLITE_OK) {
+        const char* err = sqlite3_errmsg(pDb);
+        pLogger->error("Failed to step statement {0}", std::string(err));
+        sqlite3_finalize(stmt);
+        return false;
+    }
+
+    sqlite3_finalize(stmt);
+
+    for (const auto& migration : migrations) {
+        if (MigrationExists(migration.name)) {
+            continue;
+        }
+
+        sqlite3_stmt* migrationStmt = nullptr;
+        const char* sql = migration.sql.c_str();
+
+        do {
+            int mrc = sqlite3_prepare_v2(pDb, sql, -1, &migrationStmt, nullptr);
+            if (mrc != SQLITE_OK) {
+                const char* err = sqlite3_errmsg(pDb);
+                pLogger->error("Error when executing statement {0}", std::string(err));
+                sqlite3_finalize(migrationStmt);
+                return false;
+            }
+
+            if (migrationStmt == nullptr) {
+                break;
+            }
+
+            mrc = sqlite3_step(migrationStmt);
+            if (mrc != SQLITE_OK && mrc != SQLITE_DONE) {
+                const char* err = sqlite3_errmsg(pDb);
+                pLogger->error("Failed to step/execute migration {0} - ({1})", migration.name, std::string(err));
+                sqlite3_finalize(migrationStmt);
+                return false;
+            }
+
+            sqlite3_finalize(migrationStmt);
+        } while (sql && sql[0] != '\0');
+
+        sqlite3_stmt* migrationHistoryStmt = nullptr;
+
+        int mhrc = sqlite3_prepare_v2(pDb, InsertMigrationHistoryQuery.c_str(), -1, &migrationHistoryStmt, nullptr);
+        if (mhrc != SQLITE_OK) {
+            const char* err = sqlite3_errmsg(pDb);
+            pLogger->error("Failed to prepare statement {0}", std::string(err));
+            sqlite3_finalize(migrationHistoryStmt);
+            return false;
+        }
+
+        mhrc = sqlite3_bind_text(
+            migrationHistoryStmt, 1, migration.name.c_str(), static_cast<int>(migration.name.size()), SQLITE_TRANSIENT);
+        if (mhrc != SQLITE_OK) {
+            const char* err = sqlite3_errmsg(pDb);
+            pLogger->error("Failed to bind {0}", std::string(err));
+            sqlite3_finalize(migrationHistoryStmt);
+            return false;
+        }
+
+        mhrc = sqlite3_step(migrationHistoryStmt);
+        if (mhrc != SQLITE_OK) {
+            const char* err = sqlite3_errmsg(pDb);
+            pLogger->error("Failed to step through statement {0}", std::string(err));
+            sqlite3_finalize(migrationHistoryStmt);
+            return false;
+        }
+    }
+
+    rc = sqlite3_prepare_v2(pDb, CommitTransactionQuery.c_str(), -1, &stmt, nullptr);
+    if (rc != SQLITE_OK) {
+        const char* err = sqlite3_errmsg(pDb);
+        pLogger->error("Failed to prepare statement {0}", std::string(err));
+        sqlite3_finalize(stmt);
+        return false;
+    }
+
+    rc = sqlite3_step(stmt);
+    if (rc != SQLITE_OK) {
+        const char* err = sqlite3_errmsg(pDb);
+        pLogger->error("Failed to step statement {0}", std::string(err));
+        sqlite3_finalize(stmt);
+        return false;
+    }
+
+    sqlite3_finalize(stmt);
+
+    return true;
 }
 
 void DatabaseMigration::CreateMigrationHistoryTable()
 {
-    std::string createMigrationHistory = "CREATE TABLE IF NOT EXISTS migration_history("
-                                         "id INTEGER PRIMARY KEY NOT NULL,"
-                                         "name TEXT NOT NULL"
-                                         ");";
-
     sqlite3_stmt* stmt = nullptr;
-    int rc = sqlite3_prepare_v2(pDb, createMigrationHistory.c_str(), -1, &stmt, nullptr);
-    if (rc == SQLITE_ERROR) {
+    int rc = sqlite3_prepare_v2(pDb, CreateMigrationHistoryQuery.c_str(), -1, &stmt, nullptr);
+    if (rc != SQLITE_OK) {
         const char* err = sqlite3_errmsg(pDb);
         pLogger->error("Failed to prepare statement {0}", std::string(err));
         sqlite3_finalize(stmt);
@@ -129,7 +229,7 @@ void DatabaseMigration::CreateMigrationHistoryTable()
     }
 
     rc = sqlite3_step(stmt);
-    if (rc == SQLITE_ERROR) {
+    if (rc != SQLITE_OK) {
         const char* err = sqlite3_errmsg(pDb);
         pLogger->error("Error when executing statement {0}", std::string(err));
         sqlite3_finalize(stmt);
@@ -147,6 +247,39 @@ void DatabaseMigration::CreateMigrationHistoryTable()
 
 bool DatabaseMigration::MigrationExists(const std::string& name)
 {
-    return false;
+    sqlite3_stmt* stmt = nullptr;
+
+    int rc = sqlite3_prepare_v2(pDb, SelectMigrationExistsQuery.c_str(), -1, &stmt, nullptr);
+    if (rc != SQLITE_OK) {
+        const char* err = sqlite3_errmsg(pDb);
+        pLogger->error("Failed to prepare statement {0}", std::string(err));
+        sqlite3_finalize(stmt);
+        return false;
+    }
+
+    rc = sqlite3_bind_text(stmt, 1, name.c_str(), static_cast<int>(name.size()), SQLITE_TRANSIENT);
+    if (rc != SQLITE_OK) {
+        const char* err = sqlite3_errmsg(pDb);
+        pLogger->error("Failed to prepare statement {0}", std::string(err));
+        sqlite3_finalize(stmt);
+        return false;
+    }
+
+    rc = sqlite3_step(stmt);
+    if (rc != SQLITE_OK) {
+        const char* err = sqlite3_errmsg(pDb);
+        pLogger->error("Error when stepping into result {0}", std::string(err));
+        sqlite3_finalize(stmt);
+        return false;
+    }
+
+    rc = sqlite3_step(stmt);
+    if (rc != SQLITE_DONE) {
+        pLogger->warn("Count statement returned more than 1 row");
+    }
+
+    int count = sqlite3_column_int(stmt, 0);
+
+    return count > 0;
 }
 } // namespace app::Core
