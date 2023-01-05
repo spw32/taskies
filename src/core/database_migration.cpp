@@ -56,7 +56,7 @@ const std::string DatabaseMigration::CreateMigrationHistoryQuery =
     "id INTEGER PRIMARY KEY NOT NULL,"
     "name TEXT NOT NULL"
     ");";
-const std::string DatabaseMigration::SelectMigrationExistsQuery = "SELECT count(*) FROM migration_history WHERE name = ?";
+const std::string DatabaseMigration::SelectMigrationExistsQuery = "SELECT COUNT(*) FROM migration_history WHERE name = ?";
 const std::string DatabaseMigration::InsertMigrationHistoryQuery = "INSERT INTO migration_history (name) VALUES (?);";
 
 DatabaseMigration::DatabaseMigration(std::shared_ptr<Environment> env, std::shared_ptr<spdlog::logger> logger)
