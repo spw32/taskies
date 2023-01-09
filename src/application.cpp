@@ -27,9 +27,11 @@
 #include "common/common.h"
 
 #include "core/environment.h"
+#include "core/configuration.h"
 #include "core/database_migration.h"
 
 #include "ui/persistencemanager.h"
+#include "ui/translator.h"
 
 namespace app
 {
@@ -47,6 +49,9 @@ bool Application::OnInit()
         return false;
     }
 
+    pEnv = std::make_shared<Core::Environment>();
+    pCfg = std::make_shared<Core::Configuration>(pEnv);
+
     InitializeLogger();
 
     pPersistenceManager = std::make_unique<UI::PersistenceManager>(pEnv, pLogger);
@@ -55,6 +60,15 @@ bool Application::OnInit()
     if (!RunMigrations()) {
         pLogger->error("Failed to run migrations");
         wxMessageBox("Failed to run migrations", Common::GetProgramName(), wxICON_ERROR | wxOK_DEFAULT);
+        return false;
+    }
+
+    if (!InitializeTranslations()) {
+        pLogger->error("Failed to initialize translations");
+        wxMessageBox("Failed to initialize translations.\n"
+                     "This is most likely due to missing/misconfigured translation files",
+            Common::GetProgramName(),
+            wxICON_ERROR | wxOK_DEFAULT);
         return false;
     }
 
@@ -105,12 +119,17 @@ bool Application::RunMigrations()
     return migrations.Migrate();
 }
 
+bool Application::InitializeTranslations()
+{
+    return UI::Translator::GetInstance().Load(pCfg->GetUserInterfaceLanguage(), pEnv->GetLanguagesPath());
+}
+
 bool Application::FirstStartupProcedure()
 {
-    //if (!RunSetupWizard()) {
-    //    // DeleteDatabaseFile();
-    //    return false;
-    //}
+    // if (!RunSetupWizard()) {
+    //     // DeleteDatabaseFile();
+    //     return false;
+    // }
 
     if (!pEnv->SetIsSetup()) {
         pLogger->error("Error occured when setting 'IsSetup' Windows registry key.");

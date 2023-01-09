@@ -9,6 +9,7 @@ find_package(ZLIB REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
 find_package(date CONFIG REQUIRED)
 find_package(toml11 CONFIG REQUIRED)
+find_package(nlohmann_json CONFIG REQUIRED)
 
 message (STATUS "wxWidgets_FOUND: ${wxWidgets_FOUND}")
 message (STATUS "unofficial-sqlite3_FOUND found: ${unofficial-sqlite3_FOUND}")
@@ -16,6 +17,7 @@ message (STATUS "ZLIB found: ${ZLIB_FOUND}")
 message (STATUS "spdlog found: ${spdlog_FOUND}")
 message (STATUS "date found: ${date_FOUND}")
 message (STATUS "toml11 found: ${toml11_FOUND}")
+message (STATUS "nlohmann_json found: ${nlohmann_json_FOUND}")
 
 set (SRC
     "main.cpp"
@@ -24,7 +26,9 @@ set (SRC
     "core/environment.cpp"
     "core/configuration.cpp"
     "ui/persistencemanager.cpp"
-    "core/database_migration.cpp" "common/common.cpp")
+    "core/database_migration.cpp"
+    "common/common.cpp"
+    "ui/translator.cpp")
 
 add_executable (${PROJECT_NAME} WIN32
     ${SRC}
@@ -57,4 +61,23 @@ target_link_libraries (${PROJECT_NAME} PRIVATE
     spdlog::spdlog
     date::date date::date-tz
     toml11::toml11
+    nlohmann_json::nlohmann_json
+)
+
+add_custom_command(
+    TARGET ${PROJECT_NAME}
+    POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy
+        ${CMAKE_SOURCE_DIR}/lang/en-US.json
+        "${CMAKE_BINARY_DIR}"
+    COMMAND_EXPAND_LISTS
+)
+
+add_custom_command(
+    TARGET ${PROJECT_NAME}
+    POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy
+        ${CMAKE_SOURCE_DIR}/lang/en-ZA.json
+        "${CMAKE_BINARY_DIR}"
+    COMMAND_EXPAND_LISTS
 )

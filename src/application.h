@@ -33,6 +33,7 @@ namespace app
 namespace Core
 {
 class Environment;
+class Configuration;
 }
 
 namespace UI
@@ -52,11 +53,13 @@ public:
 private:
     void InitializeLogger();
     bool RunMigrations();
+    bool InitializeTranslations();
 
     bool FirstStartupProcedure();
 
     std::shared_ptr<spdlog::logger> pLogger;
     std::shared_ptr<Core::Environment> pEnv;
+    std::shared_ptr<Core::Configuration> pCfg;
     std::shared_ptr<UI::PersistenceManager> pPersistenceManager;
 };
 } // namespace app
