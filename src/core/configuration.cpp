@@ -23,6 +23,7 @@
 
 namespace app::Core
 {
+const std::string Configuration::Sections::GeneralSection = "general";
 const std::string Configuration::Sections::DatabaseSection = "database";
 
 Configuration::Configuration(std::shared_ptr<Environment> env, std::shared_ptr<spdlog::logger> logger)
@@ -35,6 +36,7 @@ Configuration::Configuration(std::shared_ptr<Environment> env, std::shared_ptr<s
 void Configuration::Save()
 {
     const toml::value data{
+        { Sections::GeneralSection, { { "lang", mSettings.UserInterfaceLanguage } } },
         { Sections::DatabaseSection, { { "backupPath", mSettings.DatabasePath } } },
     };
 
@@ -53,6 +55,16 @@ void Configuration::Save()
     configFile.close();
 }
 
+std::string Configuration::GetUserInterfaceLanguage()
+{
+    return mSettings.UserInterfaceLanguage;
+}
+
+void Configuration::SetUserInterfaceLanguage(const std::string& value)
+{
+    mSettings.UserInterfaceLanguage = value;
+}
+
 std::string Configuration::GetDatabasePath() const
 {
     return mSettings.DatabasePath;
@@ -65,8 +77,16 @@ void Configuration::SetDatabasePath(const std::string& value)
 
 void Configuration::LoadConfigFile()
 {
-    auto data = toml::parse(pEnv->GetConfigurationPath().u8string());
+    auto data = toml::parse(pEnv->GetConfigurationPath().string());
+    GetGeneralConfig(data);
     GetDatabaseConfig(data);
+}
+
+void Configuration::GetGeneralConfig(const toml::value& config)
+{
+    const auto& generalSection = toml::find(config, Sections::GeneralSection);
+
+    mSettings.UserInterfaceLanguage = toml::find<std::string>(generalSection, "lang");
 }
 
 void Configuration::GetDatabaseConfig(const toml::value& config)

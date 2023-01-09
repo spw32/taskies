@@ -40,19 +40,25 @@ public:
 
     void Save();
 
+    std::string GetUserInterfaceLanguage();
+    void SetUserInterfaceLanguage(const std::string& value);
+
     std::string GetDatabasePath() const;
     void SetDatabasePath(const std::string& value);
 
 private:
     void LoadConfigFile();
 
+    void GetGeneralConfig(const toml::value& config);
     void GetDatabaseConfig(const toml::value& config);
 
     struct Sections {
+        static const std::string GeneralSection;
         static const std::string DatabaseSection;
     };
 
     struct Settings {
+        std::string UserInterfaceLanguage;
         std::string DatabasePath;
     };
 
