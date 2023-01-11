@@ -32,6 +32,7 @@
 
 #include "ui/persistencemanager.h"
 #include "ui/translator.h"
+#include "ui/mainframe.h"
 
 namespace app
 {
@@ -77,6 +78,12 @@ bool Application::OnInit()
             return false;
         }
     }
+
+    auto frame = new UI::MainFrame(pEnv, pCfg, pLogger);
+    frame->Show(true);
+    SetTopWindow(frame);
+
+    return true;
 }
 
 int Application::OnExit()
