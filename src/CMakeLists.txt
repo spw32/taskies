@@ -28,7 +28,8 @@ set (SRC
     "ui/persistencemanager.cpp"
     "core/database_migration.cpp"
     "common/common.cpp"
-    "ui/translator.cpp")
+    "ui/translator.cpp"
+    "ui/mainframe.cpp")
 
 add_executable (${PROJECT_NAME} WIN32
     ${SRC}
