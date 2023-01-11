@@ -18,16 +18,16 @@
 //     spw32 at proton dot me
 
 #define TASKIES_MAJOR 0
-#define TASKIES_MINOR 1
-#define TASKIES_PATCH 0
+#define TASKIES_MINOR 0
+#define TASKIES_PATCH 1
 
 #define TASKIES_VERSION (TASKIES_MAJOR * 1000 + TASKIES_MINOR * 100 + TASKIES_PATCH)
 
 #define _STRINGIFY(s) #s
 #define STRINGIFY(s) _STRINGIFY(s)
 
-#define COMPANY_NAME "Szymon Welgus"
-#define COPYRIGHT_STR "Copyright (C) 2022 Szymon Welgus"
+#define COMPANY_NAME "spw32"
+#define COPYRIGHT_STR "Copyright (C) 2023 spw32"
 
 #define FILE_DESCRIPTION "Taskies"
 #define FILE_DESCRIPTION_STR "Time and Task Management"
